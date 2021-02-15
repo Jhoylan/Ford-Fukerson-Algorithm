@@ -125,14 +125,14 @@ public class Algorithm {
 
 	private void generatePath(List<Integer> edge, int vertex){
 		int adjacentVertex = this.adjacentVertex(edge, vertex);
-		
-		this.visitsStatus.set(this.vertexes.indexOf(vertex), true);
-		this.visitsStatus.set(this.vertexes.indexOf(adjacentVertex), true);
-		
+			
 		boolean edgeIsSaturated = this.isSaturated(edge, this.isFoward(edge, vertex));
 		
 		if(!edgeIsSaturated) {
 			this.path.add(edge);
+			
+			this.visitsStatus.set(this.vertexes.indexOf(vertex), true);
+			this.visitsStatus.set(this.vertexes.indexOf(adjacentVertex), true);
 		}	
 		
 		if(!edgeIsSaturated && this.adjacentVertex(edge, vertex) != this.destiny) {
@@ -184,11 +184,7 @@ public class Algorithm {
 	}
 
 	private boolean isFoward(List<Integer> edge, int vertex) {
-		if(edge.get(0) == vertex) {
-			return true;
-		}else {
-			return false;
-		}
+		return edge.get(0) == vertex;			
 	}
 
 	private int adjacentVertex(List<Integer> edge, int vertex) {
