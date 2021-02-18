@@ -316,30 +316,30 @@ public class Algorithm {
 	}
 
 	private int calculateMaxFlow() {
+		int maxFlow = 0;
 		for(int i = 1; i < this.vertexes.size() - 1; i++) {
 			this.generatePartitionsOfS(i);
 			this.partitionsUnion(i);
-			
+						
 			for(int j = 0; j < this.sSets.size(); j++) {
 				List<Integer> sVertexes = this.sSets.get(j);
 				List<List<Integer>> cuttingEdges = this.cuttingEdges(sVertexes);
 				List<Boolean> cuttingEdgesAreFoward = this.cuttingEdgesAreFoward(sVertexes, cuttingEdges);
 				
 				if(this.itsAMinimumCut(cuttingEdges, cuttingEdgesAreFoward)) {
-					System.out.println("this is S: " + this.sSets.get(j));
 					
-					int sCapacity = this.sCapacity(cuttingEdges, cuttingEdgesAreFoward);
+					maxFlow = this.sCapacity(cuttingEdges, cuttingEdgesAreFoward);
 					
-					System.out.println("this is max flow: " + sCapacity);
+					System.out.println("this is S " + sVertexes);
 					
-					return sCapacity;
+					System.out.println("this is the maxFlow " + maxFlow);
 				}
 			}
 			
 			this.cleanSSets();
 		}
 		
-		return 0;
+		return maxFlow;
 	}
 	
 	private int sCapacity(List<List<Integer>> cuttingEdges , List<Boolean> cuttingEdgesAreFoward) {
@@ -499,7 +499,8 @@ public class Algorithm {
 		for(int i = 0; i < sVertexes.size(); i++) {
 			for(int j = 0; j < this.edges.size(); j++) {
 				for(int k = 0; k < sBarVertexes.size(); k++) {
-					if(this.edges.get(j).get(0) == sVertexes.get(i) && this.edges.get(j).get(1) == sBarVertexes.get(k)) {
+					if((this.edges.get(j).get(0) == sVertexes.get(i) && this.edges.get(j).get(1) == sBarVertexes.get(k))
+						|| (this.edges.get(j).get(1) == sVertexes.get(i) && this.edges.get(j).get(0) == sBarVertexes.get(k))) {
 						cuttingEdges.add(this.edges.get(j));
 					}
 				}
@@ -614,5 +615,7 @@ public class Algorithm {
 			return isNew;
 		}
 		
-	}	
+	}
+	
+	
 }
