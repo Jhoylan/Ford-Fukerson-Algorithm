@@ -320,16 +320,19 @@ public class Algorithm {
 			this.generatePartitionsOfS(i);
 			this.partitionsUnion(i);
 			
-			System.out.println(this.sSets);
-			
 			for(int j = 0; j < this.sSets.size(); j++) {
 				List<Integer> sVertexes = this.sSets.get(j);
 				List<List<Integer>> cuttingEdges = this.cuttingEdges(sVertexes);
 				List<Boolean> cuttingEdgesAreFoward = this.cuttingEdgesAreFoward(sVertexes, cuttingEdges);
 				
 				if(this.itsAMinimumCut(cuttingEdges, cuttingEdgesAreFoward)) {
-					System.out.println("this is the partition " + this.sSets.get(j));
-					return this.totalCapacity(cuttingEdges, cuttingEdgesAreFoward);
+					System.out.println("this is S: " + this.sSets.get(j));
+					
+					int sCapacity = this.sCapacity(cuttingEdges, cuttingEdgesAreFoward);
+					
+					System.out.println("this is max flow: " + sCapacity);
+					
+					return sCapacity;
 				}
 			}
 			
@@ -339,7 +342,7 @@ public class Algorithm {
 		return 0;
 	}
 	
-	private int totalCapacity(List<List<Integer>> cuttingEdges , List<Boolean> cuttingEdgesAreFoward) {
+	private int sCapacity(List<List<Integer>> cuttingEdges , List<Boolean> cuttingEdgesAreFoward) {
 		int totalCapacity = 0;
 		
 		for(int j = 0; j < cuttingEdges.size(); j++) {

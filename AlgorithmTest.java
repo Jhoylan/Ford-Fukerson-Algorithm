@@ -187,7 +187,6 @@ class AlgorithmTest {
 		Assertions.assertEquals(30, fordFukerson.maxFlow());
 	}
 	
-	@Test
 	void hopelessPathTest() throws InterruptedException {
 		Algorithm fordFukerson = new Algorithm();
 		
