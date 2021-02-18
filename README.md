@@ -1,2 +1,2 @@
 # Ford-Fukerson-Algorithm
-This is algorithm generates the max flow in a network
+This algorithm generates max flow in a network
