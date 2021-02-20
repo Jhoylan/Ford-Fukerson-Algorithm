@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class AlgorithmTest {
-	
+	@Test
 	void maxFlowInternetTest() throws InterruptedException {
 		Algorithm fordFukerson = new Algorithm();
 		
@@ -70,7 +70,7 @@ class AlgorithmTest {
 		Assertions.assertEquals(19, fordFukerson.maxFlow());
 	}
 	
-	
+	@Test
 	void maxFlowGoldbargTest () {
 		Algorithm fordFukerson = new Algorithm();
 		
@@ -187,6 +187,7 @@ class AlgorithmTest {
 		Assertions.assertEquals(30, fordFukerson.maxFlow());
 	}
 	
+	@Test
 	void hopelessPathTest() throws InterruptedException {
 		Algorithm fordFukerson = new Algorithm();
 		

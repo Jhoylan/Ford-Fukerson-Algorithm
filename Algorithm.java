@@ -14,7 +14,8 @@ public class Algorithm {
 	private List<Integer> sSubSet = new ArrayList<>();
 	private List<List<Integer>> sSubSets = new ArrayList<>();
 	private List<List<Integer>> sSets = new ArrayList<>();
-	private int numberOfPartitions;
+	List<List<Integer>> partitions = new ArrayList<>();;
+	private int partitionBeginIndex;
 	private int origin;
 	private int destiny;
 	private int element;
@@ -169,7 +170,7 @@ public class Algorithm {
 		return false;
 	}
 	
-	public boolean itsAPossibleEdge(List<Integer> edge, int vertex) {
+	private boolean itsAPossibleEdge(List<Integer> edge, int vertex) {
 		return !this.isSaturated(edge, this.isFoward(edge, vertex)) 
 				&& !this.visitsStatus.get(this.vertexes.indexOf(this.adjacentVertex(edge, vertex)))
 				&& !this.blockadesStatus.get(this.vertexes.indexOf(this.adjacentVertex(edge, vertex)));
@@ -268,6 +269,10 @@ public class Algorithm {
 		}
 	}
 	
+	private void cleanPartitions() {
+		this.partitions = new ArrayList<>();
+	}
+	
 	private void cleanBlockades() {
 		for(int i = 0; i < this.blockadesStatus.size(); i++) {
 			this.blockadesStatus.set(i, false);
@@ -283,7 +288,7 @@ public class Algorithm {
 			this.visitsStatus.set(i, false);
 		}
 	}
-
+	
 	private List<List<Integer>> originEdges(){
 		List<List<Integer>> originEdges = new ArrayList<>();
 		
@@ -316,8 +321,7 @@ public class Algorithm {
 	}
 
 	private int calculateMaxFlow() {
-		int maxFlow = 0;
-		for(int i = 1; i < this.vertexes.size() - 1; i++) {
+		for(int i = 1; i < this.vertexes.size(); i++) {
 			this.generatePartitionsOfS(i);
 			this.partitionsUnion(i);
 						
@@ -327,19 +331,15 @@ public class Algorithm {
 				List<Boolean> cuttingEdgesAreFoward = this.cuttingEdgesAreFoward(sVertexes, cuttingEdges);
 				
 				if(this.itsAMinimumCut(cuttingEdges, cuttingEdgesAreFoward)) {
-					
-					maxFlow = this.sCapacity(cuttingEdges, cuttingEdgesAreFoward);
-					
-					System.out.println("this is S " + sVertexes);
-					
-					System.out.println("this is the maxFlow " + maxFlow);
+					return this.sCapacity(cuttingEdges, cuttingEdgesAreFoward);
 				}
 			}
 			
 			this.cleanSSets();
+			this.cleanSSubsets();
 		}
 		
-		return maxFlow;
+		return 0;
 	}
 	
 	private int sCapacity(List<List<Integer>> cuttingEdges , List<Boolean> cuttingEdgesAreFoward) {
@@ -364,14 +364,19 @@ public class Algorithm {
 		}else {
 			List<List<Integer>> originEdges = this.originEdges();
 			
-			List<List<Integer>> partitions = this.generatingPartitions(size, originEdges.size());
-					
-			for(int i = 0; i < partitions.size(); i++) {
-				this.blockadesStatus.set(this.vertexes.indexOf(this.origin), true);
+			this.partitions = this.generatingPartitions(size, originEdges.size());
+			
+			for(int i = partitionBeginIndex; i < partitions.size(); i++) {
+				List<Integer> vertexesToBlockade = new ArrayList<>();
 				
 				boolean isFirstPositiveEdge = true;
 				
 				for(int j = 0; j < originEdges.size(); j++) {
+										
+					List<Integer> corneredVertexes = new ArrayList<>();
+										
+					this.blockadesStatus.set(this.vertexes.indexOf(this.origin), true);	
+					
 					int partitionValue = partitions.get(i).get(j);
 					
 					int subSetSize = 0;
@@ -383,35 +388,61 @@ public class Algorithm {
 						subSetSize = partitions.get(i).get(j);
 					}
 					
+					int adjacentOriginVertex = originEdges.get(j).get(1);
 					
 					if(subSetSize > 0) {
 						while(true) {
 							this.cleanSSubSet();
-							this.cleanVisitsStatus();
+							this.cleanVisitsStatus();							
 							
-							this.generateSubSetS(subSetSize, originEdges.get(j).get(1));
+							this.generateSubSetS(subSetSize, adjacentOriginVertex);
 							
 							boolean itsAValidSet = this.itsAValidSet(subSetSize);
 							
 							if(itsAValidSet) {
 								int partitionNumber = i;
 								this.sSubSet.add(0, partitionNumber);
-								this.sSubSets.add(sSubSet);								
-								this.blockadesStatus.set(this.vertexes.indexOf(this.sSubSet.get(this.sSubSet.size() - 1)), true);
+								this.sSubSets.add(sSubSet);	
+								int lastReachedVertex = this.sSubSet.get(this.sSubSet.size() - 1);
+								this.blockadesStatus.set(this.vertexes.indexOf(lastReachedVertex), true);
+							}
+							
+							if(!itsAValidSet && sSubSet.size() > 1) {
+								int lastReachedVertex = this.sSubSet.get(this.sSubSet.size() - 1);
+								corneredVertexes.add(lastReachedVertex);
+								this.cleanBlockades();
+								this.blockadesStatus.set(this.vertexes.indexOf(this.origin), true);	
+								this.blockadeCorneredVertexes(corneredVertexes);
+								this.blockadeValidAdjacentOriginVertexes(vertexesToBlockade);
 							}
 							
 							if(this.sSubSet.size() == 1 || (itsAValidSet && this.sSubSet.size() == 2)) {
-								this.blockadeAllVisitedPoints();
+								this.cleanBlockades();
+								vertexesToBlockade.add(adjacentOriginVertex);
+								this.blockadeValidAdjacentOriginVertexes(vertexesToBlockade);
+															
 								break;
-							}
-						}
-					}
-				}
+							}							
+						}					
+					}						
+				}	
 				
 				this.cleanEverything();
 			}
 			
-			
+			this.partitionBeginIndex = this.partitions.size() - this.partitionBeginIndex;
+		}
+	}
+	
+	private void blockadeValidAdjacentOriginVertexes(List<Integer> vertexToBlockade) {
+		for(int i = 0; i < vertexToBlockade.size(); i++) {
+			this.blockadesStatus.set(this.vertexes.indexOf(vertexToBlockade.get(i)), true);
+		}
+	}
+	
+	private void blockadeCorneredVertexes(List<Integer> corneredVertexes) {
+		for(int i = 0; i < corneredVertexes.size(); i++) {
+			this.blockadesStatus.set(this.vertexes.indexOf(corneredVertexes.get(i)), true);
 		}
 	}
 	
@@ -514,16 +545,11 @@ public class Algorithm {
 		this.sSubSet = new ArrayList<>();
 	}
 	
-	private void blockadeAllVisitedPoints() {
-		for(int i = 0; i < this.visitsStatus.size(); i++) {
-			if(this.visitsStatus.get(i)) {
-				this.blockadesStatus.set(i, true);
-			}
-		}
+	private void cleanSSubsets() {
+		this.sSubSets = new ArrayList<>();
 	}
 	
 	private List<List<Integer>> generatingPartitions(int number, int maxNumberOfPartitions){
-		List<List<Integer>> partitions = new ArrayList<>();
 		List<Integer> partition = new ArrayList<>();
 		
 		for(int i = 0; i < maxNumberOfPartitions; i++) {
@@ -546,7 +572,7 @@ public class Algorithm {
 			
 			if(sumOfElements == number) {
 				List<Integer> clonedPartition = new ArrayList<>(partition);
-				partitions.add(clonedPartition);
+				this.partitions.add(clonedPartition);
 			}
 			
 			if(sumOfElements == number * maxNumberOfPartitions) {
@@ -557,44 +583,165 @@ public class Algorithm {
 			}
 		}
 		
-		this.numberOfPartitions = partitions.size();
-		
-		return partitions;
+		return this.partitions;
 	}
 	
-	private void partitionsUnion(int size) {	
-		for(int i = 0; i < this.numberOfPartitions; i++) {
+	private void partitionsUnion(int size) {
+		for(int i = 0; i < this.partitions.size(); i++) {
 			List<List<Integer>> samePartitionSubSets = new ArrayList<>();
 			
 			for(int j = 0; j < this.sSubSets.size(); j++) {
 				if(this.sSubSets.get(j).get(0) == i) {
-					samePartitionSubSets.add(new ArrayList<>(this.sSubSets.get(j)));
+					List<Integer> auxiliar = new ArrayList<>(this.sSubSets.get(j));
+					auxiliar.remove(0);
+					samePartitionSubSets.add(auxiliar);
 				}
 			}
 			
-			int sum = 0;
+			List<Integer> addends = new ArrayList<>();
 			
-			for(int k = 0; k < samePartitionSubSets.size(); k++) {
-				samePartitionSubSets.get(k).remove(0);
-				sum += samePartitionSubSets.get(k).size();
+			int addendsQuantity = 0;
+			int addendsSum = 0;
+			
+						
+			for(int k = 0; k < samePartitionSubSets.size(); k++) {	
+				for(int l = 0; l < samePartitionSubSets.size(); l++) {									
+					if(samePartitionSubSets.get(l).get(0) == samePartitionSubSets.get(k).get(0)) {
+						addendsQuantity++;
+					}					
+				}
+				
+				addends.add(addendsQuantity - addendsSum);
+				
+				addendsSum += addendsQuantity - addendsSum;
+				
+				k = addendsSum - 1;
 			}
 			
-			if(sum == size - 1) {
+			int numberOfPositiveAddends = 0;			
+			int firstPositiveAddend = 0;
+			
+			boolean isTheFirstPositiveAddend = true;
+			
+			for(int m = 0; m < this.partitions.get(i).size(); m++) {
+				if(this.partitions.get(i).get(m) != 0) {
+					if(isTheFirstPositiveAddend) {
+						firstPositiveAddend = this.partitions.get(i).get(m);
+						isTheFirstPositiveAddend = false;
+					}	
+					
+					numberOfPositiveAddends++;
+				}
+			}
+			
+			if(firstPositiveAddend == 1) {
+				numberOfPositiveAddends--;
+			}
+			
+			boolean theyAreValidsSubSets = addends.size() == numberOfPositiveAddends;
+			
+			if(theyAreValidsSubSets && numberOfPositiveAddends > 1) {
 				List<Integer> sSet = new ArrayList<>();
+				List<Integer> count = new ArrayList<>(addends);
+				
 				sSet.add(this.origin);
 				
-				for(int w = 0; w < samePartitionSubSets.size(); w++) {
-					sSet.addAll(samePartitionSubSets.get(w));
-				}
+				boolean toBreak = false;
 				
-				if(this.itsANewSet(sSet)) {
-					this.sSets.add(sSet);
+				while(!toBreak) {	
+					for(int o = 0; o < count.size(); o++) {
+						if(count.get(o) == 1) {
+							toBreak = toBreak || false;
+						}else {
+							toBreak = toBreak || true;
+						}
+					}
+					
+					toBreak = !toBreak;
+					
+					List<List<Integer>> possibleSSubsets = new ArrayList<>();
+					
+					for(int n = 0; n < count.size(); n++) {
+						int sSetsPositions = count.get(n) - 1;
+						
+						if(n > 0) {
+							sSetsPositions = -1;
+							
+							for(int m = n - 1; m > -1; m--) {
+								sSetsPositions += addends.get(m);
+							}
+							
+							sSetsPositions += count.get(n);
+						}
+						
+						possibleSSubsets.add(samePartitionSubSets.get(sSetsPositions));
+					}
+					
+					if(this.theyAreAllDifferent(possibleSSubsets)) {
+						sSet = this.addAll(possibleSSubsets);
+					}
+					
+					//the size 1 occurs when there is repetition between two or more sets
+					if(this.itsANewSet(sSet) && sSet.size() > 1) {
+						this.sSets.add(sSet);
+						sSet = new ArrayList<>();
+						sSet.add(this.origin);
+					}
+					
+					count.set(0, count.get(0) - 1);
+					
+					for(int p = 0; p < count.size() - 1; p++) {
+						if(count.get(p) < 1) {
+							count.set(p, addends.get(p));
+							count.set(p + 1, count.get(p + 1) - 1);
+						}						
+					}				
+				}				
+			}
+			
+			if(theyAreValidsSubSets && numberOfPositiveAddends == 1) {
+				for(int w = 0; w < samePartitionSubSets.size(); w++) {
+					samePartitionSubSets.get(w).add(0, this.origin);
+					
+					if(this.itsANewSet(samePartitionSubSets.get(w))) {
+						this.sSets.add(samePartitionSubSets.get(w));
+					}				
 				}				
 			}
 		}
+		
 	}
 	
-	public boolean itsANewSet(List<Integer> sSet) {
+	private List<Integer> addAll(List<List<Integer>> possibleSSet){
+		List<Integer> sSet = new ArrayList<>();
+		sSet.add(this.origin);
+		
+		for(int i = 0; i < possibleSSet.size(); i++) {
+			sSet.addAll(possibleSSet.get(i));
+		}
+		
+		return sSet;
+	}
+	
+	
+	private boolean theyAreAllDifferent(List<List<Integer>> possibleSSet) {
+				
+		for(int i = 0; i < possibleSSet.size(); i++) {
+			for(int j = 0; j < possibleSSet.size(); j++) {
+				if(i != j) {
+					for(int k = 0; k < possibleSSet.get(j).size(); k++) {
+						if(possibleSSet.get(i).indexOf(possibleSSet.get(j).get(k)) != -1) {
+							return false;
+						}
+					}
+				}
+			}
+		}
+		
+		return true;
+	}
+	
+	private boolean itsANewSet(List<Integer> sSet) {
 		if(this.sSets.size() == 0) {
 			return true;
 		}else {
@@ -616,6 +763,7 @@ public class Algorithm {
 		}
 		
 	}
+	
 	
 	
 }
