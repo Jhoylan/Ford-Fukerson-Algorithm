@@ -1,4 +1,4 @@
-package fordFukerson;
+package fordFulkerson;
 
 import java.util.ArrayList;
 import java.util.List;
